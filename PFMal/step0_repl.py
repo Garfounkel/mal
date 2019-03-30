@@ -5,16 +5,16 @@ def READ(inputs: str) -> str:
     return inputs
 
 
-def EVAL(ast) -> str:  # TODO: Add correct type
+def EVAL(ast: str, env: dict) -> str:
     return ast
 
 
-def PRINT(inputs: str) -> str:
-    return inputs
+def PRINT(exp: str) -> str:
+    return exp
 
 
 def rep(inputs: str) -> str:
-    return PRINT(EVAL(READ(inputs)))
+    return PRINT(EVAL(READ(inputs), {}))
 
 
 if __name__ == '__main__':
