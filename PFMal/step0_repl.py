@@ -1,3 +1,6 @@
+from mal_readline import init_readline
+
+
 def READ(inputs: str) -> str:
     return inputs
 
@@ -15,11 +18,12 @@ def rep(inputs: str) -> str:
 
 
 if __name__ == '__main__':
+    init_readline()
     while True:
         try:
-            user_input = input('user> ')
-            output = rep(user_input)
-            print(output)
+            print(rep(input('user> ')))
+        except KeyboardInterrupt:
+            print('^C')
         except EOFError:
             print()
             exit(0)
