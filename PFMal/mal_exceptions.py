@@ -1,0 +1,2 @@
+class MalParseError(Exception):
+    pass
