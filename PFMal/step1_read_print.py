@@ -17,7 +17,7 @@ def EVAL(ast: MalType, env: dict) -> MalType:
 
 
 def PRINT(exp: MalType) -> str:
-    return pr_str(exp)
+    return pr_str(exp, print_readably=True)
 
 
 def rep(input_str: str) -> str:
