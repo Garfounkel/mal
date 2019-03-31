@@ -1,6 +1,7 @@
 import re
-from mal_exceptions import MalParseError
-from mal_types import MalType, Number, Symbol, Nil, String, Bool
+from mal_exceptions import MalParseError, BlankInput
+from mal_types import MalType, Number, Symbol, Nil, String, Sexpr, BoolTrue, BoolFalse, Vector
+from typing import Union
 
 
 class Reader:
@@ -9,31 +10,34 @@ class Reader:
         self.pos = 0
 
     def next(self):
-        tok = self.tokens[self.pos]
+        tok = self.peek()
         self.pos += 1
         return tok
 
     def peek(self):
-        return self.tokens[self.pos]
+        return self.tokens[self.pos] if self.pos < len(self.tokens) else None
 
 
-def tokenize(inputs: str) -> list:
-    pattern = re.compile(r"""[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)""")
-    return re.findall(pattern)
+def tokenize(input_str: str) -> list:
+    pattern = re.compile(r"""[\s,]*(~@|[\[\]{}()'`~^@]|"(?:[\\].|[^\\"])*"?|;.*|[^\s\[\]{}()'"`@,;]+)""")
+    return [tok for tok in pattern.findall(input_str) if tok[0] != ';']
 
 
-def read_list(reader: Reader) -> list:
+def read_sequence(reader: Reader, start='(', end=')') -> Union[Sexpr, Vector]:
     reader.next()  # skips the opening paren '('
-    tokens = list()
+    sequence = Sexpr() if start == '(' else Vector()
 
-    try:
-        while reader.peek()[0] != ')':
-            tokens.append(read_from(reader))
-    except IndexError:  # EOF
-        raise MalParseError(f'Expected a closing paren for s-expr at position {reader.pos}.')
+    while True:
+        tok = reader.peek()
+        if tok is None:
+            raise MalParseError(f"Expected '{end}', got EOF")
+        elif tok[0] != end:
+            sequence.append(read_from(reader))
+        else:
+            break
 
     reader.next()  # skips the closing paren ')'
-    return tokens
+    return sequence
 
 
 def read_atom(reader: Reader) -> MalType:
@@ -41,14 +45,17 @@ def read_atom(reader: Reader) -> MalType:
 
     parse_keyword_scalars = {
         'nil': Nil(),
-        'true': Bool(True),
-        'false': Bool(False)
+        'true': BoolTrue(),
+        'false': BoolFalse()
     }
 
     if token in parse_keyword_scalars:
         return parse_keyword_scalars[token]
-    elif token[0] == '"' and token[-1] == '"':
-        return String(token)
+    elif token[0] == '"':
+        if token[-1] == '"':
+            return String(token)
+        else:
+            raise MalParseError(f"Expected '\"', got EOF")
     else:
         try:
             parsed_integer = int(token)
@@ -57,14 +64,19 @@ def read_atom(reader: Reader) -> MalType:
             return Symbol(token)
 
 
-def read_from(reader: Reader) -> list:
-    if reader.peek()[0] == '(':
-        return read_list(reader)
+def read_from(reader: Reader) -> MalType:
+    tok = reader.peek()
+    if tok is None:
+        raise BlankInput()
+    if tok[0] == '(':
+        return read_sequence(reader, start='(', end=')')
+    if tok[0] == '[':
+        return read_sequence(reader, start='[', end=']')
     else:
-        return [read_atom(reader)]
+        return read_atom(reader)
 
 
-def read_str(input_str):
+def read_str(input_str) -> MalType:
     tokens = tokenize(input_str)
     reader = Reader(tokens)
-    read_from(reader)
+    return read_from(reader)

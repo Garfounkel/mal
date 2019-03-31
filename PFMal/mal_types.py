@@ -14,9 +14,21 @@ class Nil(MalType):
     pass
 
 
-class Bool(bool, MalType):
+class BoolTrue(MalType):
+    pass
+
+
+class BoolFalse(MalType):
     pass
 
 
 class String(str, MalType):
+    pass
+
+
+class Sexpr(list, MalType):
+    pass
+
+
+class Vector(list, MalType):
     pass
