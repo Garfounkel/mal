@@ -1,6 +1,16 @@
 import re
 
 
+def pytype_to_maltype(obj: object):
+    py_to_mal = {
+        int: lambda num: Number(num),
+        list: lambda l: Sexpr(l),
+        dict: lambda d: HashMap(d),
+    }
+
+    return py_to_mal[type(obj)](obj)
+
+
 class MalType:
     pass
 
@@ -52,7 +62,10 @@ class Vector(list, MalType):
 
 class HashMap(dict, MalType):
     def __init__(self, elements):
-        super(HashMap, self).__init__(zip(elements[0::2], elements[1::2]))
+        if type(elements) is dict:
+            super(HashMap, self).__init__(elements)
+        else:
+            super(HashMap, self).__init__(zip(elements[0::2], elements[1::2]))
 
 
 # ReaderMacros
